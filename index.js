@@ -19,9 +19,9 @@ const params_config = {
     "conteudoTitulo" : /aa/ 
 }
 let headers = config.headers() // pode passar como parametro uma autorização e uma useraccess de sua preferencia, caso contrario ele retornara o default (diretoria de produtos)
-let parametros = config.pagination() // pode ser passado um limit e offset de sua preferencia, caso contrário sempre será uma paginação de 100
 
 async function consultaArtefatos(url){
+    let parametros = config.pagination() // pode ser passado um limit e offset de sua preferencia, caso contrário sempre será uma paginação de 100
     let SCRIPT_VALIDACAO = []
     let tipoArtefato = url.split('/')[url.split('/').length -2]
     let condition = true
@@ -61,7 +61,7 @@ async function consultaArtefatos(url){
     try {
         for(script of SCRIPT_VALIDACAO){
             let result_codigo = await axios({
-                url : url.replace('pesquisa',`${script.id}`).replace('componentes','scripts').replace('fontes-dinamicas','scripts'),
+                url : url.replace('pesquisa',`${script.id}`).replace('componentes','scripts').replace('fontes-dinamicas','scripts').replace('criticas','scripts'),
                 method: 'get',
                 headers : headers
             })
