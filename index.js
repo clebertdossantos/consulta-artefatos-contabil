@@ -7,16 +7,16 @@ let pathFile = config.diretorio()
 const params_config = {
     "busca" : {
         "script"        : true,
-        "componente"    : true,
-        "fonteDinamica" : true,
-        "critica"       : true
+        "componente"    : false,
+        "fonteDinamica" : false,
+        "critica"       : false
     },
-    "tipoBusca" : "CODIGO", // TITULO,TAG,CODIGO,NATUREZA
-    "tagId" : 17789,
+    "tipoBusca" : "TAG", // TITULO,TAG,CODIGO,NATUREZA
+    "tagId" : 122406,
     // "tagId" : 121332, // reinf
     "natureza" : "TRANSPARENCIA_FLY",
-    "conteudoCodigo" : /v1\.empenhos/,
-    "conteudoTitulo" : /aa/ 
+    "conteudoCodigo" : /aaa/,
+    "conteudoTitulo" : /VDC|vdc/ 
 }
 let headers = config.headers() // pode passar como parametro uma autorização e uma useraccess de sua preferencia, caso contrario ele retornara o default (diretoria de produtos)
 
@@ -29,6 +29,12 @@ async function consultaArtefatos(url){
     //* buscando scripts
     while (condition) {
         try{
+            let tag = /tag/
+            if(tag.exec(url)){
+                url = url.split('/')
+                url.splice(6,2)
+                url = url.join('/')
+            }
             let result_api = await axios({
                 url : url,
                 method: 'post',
@@ -88,6 +94,7 @@ async function consultaArtefatos(url){
 (async () => {
     for(it of config.artefatos(params_config.busca)){
         let result_rota = config.ajustarRotas(it,params_config)
+        console.log(result_rota)
         let result = await consultaArtefatos(result_rota)
         // break
     }
