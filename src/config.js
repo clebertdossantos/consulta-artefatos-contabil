@@ -1,6 +1,7 @@
 const login = require("./login.js")
 const fs = require('fs')
 const path = require('path')
+const { abort } = require("process")
 
 exports.headers = (aut = null,user = null) => {
     if(aut && user){
@@ -114,8 +115,16 @@ exports.validacaoScript = (pp) => {
     }else{
         if(pp.tipoBusca === "TITULO"){
             if(pp.conteudoTitulo.exec(script.titulo)){
-            return true
+                return true
             }else{
+                return false
+            }
+        }else if(pp.tipoBusca === "IDENTIFICADOR"){
+            if(pp.conteudoIdentificador.exec(script.identificador||"")){
+                // console.log(`[SUCESSO] - ${pp.titulo} >> ${script.identificador||"N/A"}`);
+                return true
+            }else{
+                // console.log(`[ERRO] - ${script.titulo} >> ${script.identificador||"N/A"}`);
                 return false
             }
         }else if(pp.tipoBusca === "TAG"){
