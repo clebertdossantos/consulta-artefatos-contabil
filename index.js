@@ -11,14 +11,16 @@ const params_config = {
         "fonteDinamica" : false,
         "critica"       : false
     },
-    "tipoBusca" : "TAG", // TITULO,TAG,CODIGO,NATUREZA
-    "tagId" : 122406,
+    "tipoBusca" : "CODIGO", // TITULO,TAG,CODIGO,NATUREZA,IDENTIFICADOR
+    "tagId" : 122435,
     // "tagId" : 121332, // reinf
-    "natureza" : "TRANSPARENCIA_FLY",
-    "conteudoCodigo" : /aaa/,
+    "natureza" : "ENCERRAMENTO_EXERCICIO",
+    "conteudoIdentificador" : /siops/, 
+    "conteudoCodigo" : /sl\.cloud\.betha/,
     "conteudoTitulo" : /VDC|vdc/ 
 }
 let headers = config.headers() // pode passar como parametro uma autorização e uma useraccess de sua preferencia, caso contrario ele retornara o default (diretoria de produtos)
+// let headers = config.headers("Bearer 32eb6822-0825-4c36-a320-546582cd7662","iGjntGGLlOxyhhjYRFfn5m72IXisK3iameo7PCeQ9KA=") // pode passar como parametro uma autorização e uma useraccess de sua preferencia, caso contrario ele retornara o default (diretoria de produtos)
 
 async function consultaArtefatos(url){
     let parametros = config.pagination() // pode ser passado um limit e offset de sua preferencia, caso contrário sempre será uma paginação de 100
@@ -30,11 +32,15 @@ async function consultaArtefatos(url){
     while (condition) {
         try{
             let tag = /tag/
-            if(tag.exec(url)){
+            let natureza = /natureza/ 
+            if(tag.exec(url) || natureza.exec(url)){
+                console.log(url);
                 url = url.split('/')
                 url.splice(6,2)
                 url = url.join('/')
+                console.log(url);
             }
+
             let result_api = await axios({
                 url : url,
                 method: 'post',
@@ -66,23 +72,28 @@ async function consultaArtefatos(url){
     //? buscando código fonte dos scritps para exportação dos arquivos
     try {
         for(script of SCRIPT_VALIDACAO){
-            let result_codigo = await axios({
-                url : url.replace('pesquisa',`${script.id}`).replace('componentes','scripts').replace('fontes-dinamicas','scripts').replace('criticas','scripts'),
-                method: 'get',
-                headers : headers
-            })
-            let codigoFonte = (result_codigo.data.revisao.codigoFonte || "").toString()
-            if(params_config.tipoBusca === "CODIGO"){
-                if(params_config.conteudoCodigo.exec(codigoFonte)){
+            try {
+                let result_codigo = await axios({
+                    url : url.replace('pesquisa',`${script.id}`).replace('componentes','scripts').replace('fontes-dinamicas','scripts').replace('criticas','scripts'),
+                    method: 'get',
+                    headers : headers
+                })
+                let codigoFonte = (result_codigo.data.revisao.codigoFonte || "").toString()
+                if(params_config.tipoBusca === "CODIGO"){
+                    if(params_config.conteudoCodigo.exec(codigoFonte)){
+                        console.log(script.titulo)
+                        fs.writeFileSync(path.join(pathFile,script.arquivo),codigoFonte)
+                    }else{
+                        continue;
+                    }
+                }else{
                     console.log(script.titulo)
                     fs.writeFileSync(path.join(pathFile,script.arquivo),codigoFonte)
-                }else{
-                    continue;
-                }
-            }else{
-                console.log(script.titulo)
-                fs.writeFileSync(path.join(pathFile,script.arquivo),codigoFonte)
-            } 
+                } 
+            } catch (error) {
+                console.log(`Erro ao consultar o script : ${JSON.stringify(script)}`)
+            }
+            
         }
     } catch (error) {
         console.log('>>>>>>>>>> ERRO AO CONSULTAR O CÓDIGO FONTE');
