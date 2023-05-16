@@ -1,59 +1,56 @@
 const axios = require('axios');
+const querystring = require('querystring');
 const config = require("./src/config.js")
 const fs= require('fs');
 const path = require('path');
+const { log } = require('console');
+const { connect } = require('http2');
 let pathFile = config.diretorio()
 
 const params_config = {
     "busca" : {
-        "script"        : true,
-        "componente"    : false,
+        "script"        : false,
+        "componente"    : true,
         "fonteDinamica" : false,
         "critica"       : false
     },
-    "tipoBusca" : "CODIGO", // TITULO,TAG,CODIGO,NATUREZA,IDENTIFICADOR
-    "tagId" : 122435,
-    // "tagId" : 121332, // reinf
+    "tipoBusca" : "TAG", // TITULO,TAG,CODIGO,NATUREZA,IDENTIFICADOR
+    "tagNome" : "SIOPS 2023",
+    // "tagId" : 122544, // reinf
     "natureza" : "ENCERRAMENTO_EXERCICIO",
     "conteudoIdentificador" : /siops/, 
-    "conteudoCodigo" : /sl\.cloud\.betha/,
-    "conteudoTitulo" : /VDC|vdc/ 
+    "conteudoCodigo" : /EM_CONVERSAO/,
+    "conteudoTitulo" : /VDC|vdc/,
 }
 let headers = config.headers() // pode passar como parametro uma autorização e uma useraccess de sua preferencia, caso contrario ele retornara o default (diretoria de produtos)
 // let headers = config.headers("Bearer 32eb6822-0825-4c36-a320-546582cd7662","iGjntGGLlOxyhhjYRFfn5m72IXisK3iameo7PCeQ9KA=") // pode passar como parametro uma autorização e uma useraccess de sua preferencia, caso contrario ele retornara o default (diretoria de produtos)
 
-async function consultaArtefatos(url){
+async function consultaArtefatos(content){
+    // log(content)
     let parametros = config.pagination() // pode ser passado um limit e offset de sua preferencia, caso contrário sempre será uma paginação de 100
     let SCRIPT_VALIDACAO = []
-    let tipoArtefato = url.split('/')[url.split('/').length -2]
+    let tipoArtefato = Object.keys(content)[1]
     let condition = true
-    console.log(`>>>>> ${tipoArtefato}`)
+    console.log(`>>>>> ${Object.keys(content)[1]}`)
     //* buscando scripts
     while (condition) {
         try{
-            let tag = /tag/
-            let natureza = /natureza/ 
-            if(tag.exec(url) || natureza.exec(url)){
-                console.log(url);
-                url = url.split('/')
-                url.splice(6,2)
-                url = url.join('/')
-                console.log(url);
-            }
-
             let result_api = await axios({
-                url : url,
-                method: 'post',
+                url : `${content.url}?${querystring.stringify({"filter" : content[Object.keys(content)[1]] , "offset": parametros.offset, "limit" : parametros.limit})}`,
+                method: 'get',
                 headers : headers,
-                data : parametros
+                // data : parametros
+                
             })
             for(script of result_api.data.content){
                 if(config.validacaoScript(params_config)){
                     // console.log(`VALIDADO : ${script.titulo}`);
+                    // log(script)
                     SCRIPT_VALIDACAO.push({
                         "id" : script.id,
                         "titulo" : script.titulo,
-                        "arquivo" : `[${tipoArtefato}] - ${(script.titulo.replace('/',' - ')).replace('/',' - ').replace(':','-').substring(0,170)}.groovy`
+                        "arquivo" : `[${tipoArtefato}] - ${(script.titulo.replace('/',' - ')).replace('/',' - ').replace(':','-').substring(0,170)}.groovy`,
+                        "revisao" : script.referencia.id
                     })
                 }else{
                     // console.log(`NAO VALIDADO : ${script.titulo}`);
@@ -72,9 +69,11 @@ async function consultaArtefatos(url){
     //? buscando código fonte dos scritps para exportação dos arquivos
     try {
         for(script of SCRIPT_VALIDACAO){
+            // log(script)
+            // return 
             try {
                 let result_codigo = await axios({
-                    url : url.replace('pesquisa',`${script.id}`).replace('componentes','scripts').replace('fontes-dinamicas','scripts').replace('criticas','scripts'),
+                    url : `https://plataforma-scripts.betha.cloud/scripts/v1/api/scripts/${script.revisao}`,
                     method: 'get',
                     headers : headers
                 })
@@ -82,6 +81,7 @@ async function consultaArtefatos(url){
                 if(params_config.tipoBusca === "CODIGO"){
                     if(params_config.conteudoCodigo.exec(codigoFonte)){
                         console.log(script.titulo)
+                        // log(script)
                         fs.writeFileSync(path.join(pathFile,script.arquivo),codigoFonte)
                     }else{
                         continue;
@@ -103,10 +103,19 @@ async function consultaArtefatos(url){
 
 
 (async () => {
-    for(it of config.artefatos(params_config.busca)){
-        let result_rota = config.ajustarRotas(it,params_config)
-        console.log(result_rota)
-        let result = await consultaArtefatos(result_rota)
+    let objRotas = config.artefatos(params_config)
+    for(it of Object.keys(objRotas).filter((pp) => pp !== "url")){
+        let result = await consultaArtefatos(JSON.parse(`{ "url" : "${objRotas.url}", "${it}" : "${objRotas[it]}" }`))
         // break
     }
 })();
+
+// nome+like+"%25siops%25"
+// https://plataforma-scripts.betha.cloud/scripts/v1/api/tags
+
+
+
+// https://plataforma-extensoes.betha.cloud/api/extensao?filter=tipo%20%3D%20'SCRIPT'%20and%20propriedades%20in(new%20Propriedade('tipoScript',%20'JOB'))%20and%20tags%20in('SIOPS%202023')&offset=0&limit=1000
+// https://plataforma-extensoes.betha.cloud/api/extensao?filter=tipo%20%3D%20'SCRIPT'%20and%20propriedades%20in(new%20Propriedade('tipoScript'%2C%20'JOB'))%20and%20tags%20in('SIOPS%202023')&offset=0&limit=100
+// https://plataforma-extensoes.betha.cloud/api/extensao?filter=tipo%20%3D%20'SCRIPT'%20and%20propriedades%20in(new%20Propriedade('tipoScript',%20'JOB'))%20and%20tags%20in('SIOPS%202023'))&offset=0&limit=100
+
