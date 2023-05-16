@@ -33,20 +33,34 @@ exports.pagination = (offset,limit) => {
 }
 
 exports.artefatos = (pp) => {
-    let apis = [] 
-    if(pp.script){
-        apis.push("https://plataforma-scripts.betha.cloud/scripts/v1/api/scripts/pesquisa")
+    let getObj = {
+        "url" : "https://plataforma-extensoes.betha.cloud/api/extensao",
     }
-    if(pp.componente){
-        apis.push("https://plataforma-scripts.betha.cloud/scripts/v1/api/componentes/pesquisa")
+    if(pp.busca.script){
+        getObj["script"] = "tipo = 'SCRIPT' and propriedades in(new Propriedade('tipoScript', 'JOB'))"
+        if(pp.tagNome){
+            getObj["script"] = `${getObj.script} and tags in('${pp.tagNome}')`
+        }
     }
-    if(pp.fonteDinamica){
-        apis.push("https://plataforma-scripts.betha.cloud/scripts/v1/api/fontes-dinamicas/pesquisa")
+    if(pp.busca.componente){
+        getObj["componente"] = "tipo = 'SCRIPT' and propriedades in(new Propriedade('tipoScript', 'COMPONENTE'))"
+        if(pp.tagNome){
+            getObj["componente"] = `${getObj.componente} and tags in('${pp.tagNome}')`
+        }
     }
-    if(pp.critica){
-        apis.push("https://plataforma-scripts.betha.cloud/scripts/v1/api/criticas/pesquisa")
+    if(pp.busca.fonteDinamica){
+        getObj["fonteDinamica"] = "tipo = 'SCRIPT' and propriedades in(new Propriedade('tipoScript', 'FONTE_DINAMICA'))"
+        if(pp.tagNome){
+            getObj["fonteDinamica"] = `${getObj.fonteDinamica} and tags in('${pp.tagNome}')`
+        }
     }
-    return apis
+    if(pp.busca.critica){
+        getObj["critica"] = "tipo = 'SCRIPT' and propriedades in(new Propriedade('tipoScript', 'CRITICA'))"
+        if(pp.tagNome){
+            getObj["critica"] = `${getObj.critica} and tags in('${pp.tagNome}')`
+        }
+    }
+    return getObj
 }
 
 exports.diretorio = () => {
@@ -68,19 +82,20 @@ exports.ajustarRotas = (rota,configuracao) => {
     let newIt = rota
     let array = rota.split('/')
     if(configuracao.tipoBusca === "TAG"){
+        console.log(configuracao.tagNome)
         newIt = []
         for(i of array){
             if(array[array.length -2] === "scripts"){
                 newIt.push(i)
                 if(i === "api"){
                     newIt.push('tags')
-                    newIt.push(configuracao.tagId)
+                    newIt.push(configuracao.tagNome)
                 }
             }else{
                 newIt.push(i)
                 if(i === "componentes" || i === "fontes-dinamicas"){
                     newIt.push('tags')
-                    newIt.push(configuracao.tagId)
+                    newIt.push(configuracao.tagNome)
                     newIt.push('scripts')
                 }                
             }
