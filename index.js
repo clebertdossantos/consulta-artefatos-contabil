@@ -4,7 +4,6 @@ const config = require("./src/config.js")
 const fs= require('fs');
 const path = require('path');
 const { log } = require('console');
-const { connect } = require('http2');
 let pathFile = config.diretorio()
 
 const params_config = {
@@ -109,13 +108,3 @@ async function consultaArtefatos(content){
         // break
     }
 })();
-
-// nome+like+"%25siops%25"
-// https://plataforma-scripts.betha.cloud/scripts/v1/api/tags
-
-
-
-// https://plataforma-extensoes.betha.cloud/api/extensao?filter=tipo%20%3D%20'SCRIPT'%20and%20propriedades%20in(new%20Propriedade('tipoScript',%20'JOB'))%20and%20tags%20in('SIOPS%202023')&offset=0&limit=1000
-// https://plataforma-extensoes.betha.cloud/api/extensao?filter=tipo%20%3D%20'SCRIPT'%20and%20propriedades%20in(new%20Propriedade('tipoScript'%2C%20'JOB'))%20and%20tags%20in('SIOPS%202023')&offset=0&limit=100
-// https://plataforma-extensoes.betha.cloud/api/extensao?filter=tipo%20%3D%20'SCRIPT'%20and%20propriedades%20in(new%20Propriedade('tipoScript',%20'JOB'))%20and%20tags%20in('SIOPS%202023'))&offset=0&limit=100
-
