@@ -3,26 +3,25 @@ const querystring = require('querystring');
 const config = require("./src/config.js")
 const fs= require('fs');
 const path = require('path');
-const { log } = require('console');
 let pathFile = config.diretorio()
 
 const params_config = {
     "busca" : {
-        "script"        : false,
-        "componente"    : true,
+        "script"        : true,
+        "componente"    : false,
         "fonteDinamica" : false,
         "critica"       : false
     },
     "tipoBusca" : "TAG", // TITULO,TAG,CODIGO,NATUREZA,IDENTIFICADOR
-    "tagNome" : "SIOPS 2023",
+    "tagNome" : "EFD-Reinf",
     // "tagId" : 122544, // reinf
     "natureza" : "ENCERRAMENTO_EXERCICIO",
-    "conteudoIdentificador" : /siops/, 
-    "conteudoCodigo" : /EM_CONVERSAO/,
+    "conteudoIdentificador" : /aa/, 
+    "conteudoCodigo" : /empenho\.busca/,
     "conteudoTitulo" : /VDC|vdc/,
 }
 let headers = config.headers() // pode passar como parametro uma autorização e uma useraccess de sua preferencia, caso contrario ele retornara o default (diretoria de produtos)
-// let headers = config.headers("Bearer 32eb6822-0825-4c36-a320-546582cd7662","iGjntGGLlOxyhhjYRFfn5m72IXisK3iameo7PCeQ9KA=") // pode passar como parametro uma autorização e uma useraccess de sua preferencia, caso contrario ele retornara o default (diretoria de produtos)
+// let headers = config.headers("Bearer 376cea74-f7ed-4880-97ba-a8bdb76f3522","3bPMlHZPYF-vigKCLkvOPok0ba3ZrbgRW1sJiexSdu4=") // pode passar como parametro uma autorização e uma useraccess de sua preferencia, caso contrario ele retornara o default (diretoria de produtos)
 
 async function consultaArtefatos(content){
     // log(content)
@@ -39,17 +38,16 @@ async function consultaArtefatos(content){
                 method: 'get',
                 headers : headers,
                 // data : parametros
-                
             })
             for(script of result_api.data.content){
                 if(config.validacaoScript(params_config)){
-                    // console.log(`VALIDADO : ${script.titulo}`);
+                    // console.log(`VALIDADO : ${JSON.stringify(script,null,2)}`);
                     // log(script)
                     SCRIPT_VALIDACAO.push({
-                        "id" : script.id,
+                        "id" : script.referencia.id,
                         "titulo" : script.titulo,
                         "arquivo" : `[${tipoArtefato}] - ${(script.titulo.replace('/',' - ')).replace('/',' - ').replace(':','-').substring(0,170)}.groovy`,
-                        "revisao" : script.referencia.id
+                        "revisao" : script.referencia.revisao
                     })
                 }else{
                     // console.log(`NAO VALIDADO : ${script.titulo}`);
@@ -68,15 +66,15 @@ async function consultaArtefatos(content){
     //? buscando código fonte dos scritps para exportação dos arquivos
     try {
         for(script of SCRIPT_VALIDACAO){
-            // log(script)
+            // console.log(script)
             // return 
             try {
                 let result_codigo = await axios({
-                    url : `https://plataforma-scripts.betha.cloud/scripts/v1/api/scripts/${script.revisao}`,
+                    url : `https://plataforma-scripts.betha.cloud/scripts/v1/api/scripts/${script.id}/revisoes/${script.revisao}`,
                     method: 'get',
-                    headers : headers
+                    headers : headers,
                 })
-                let codigoFonte = (result_codigo.data.revisao.codigoFonte || "").toString()
+                let codigoFonte = (result_codigo.data.codigoFonte || "").toString()
                 if(params_config.tipoBusca === "CODIGO"){
                     if(params_config.conteudoCodigo.exec(codigoFonte)){
                         console.log(script.titulo)
@@ -108,3 +106,13 @@ async function consultaArtefatos(content){
         // break
     }
 })();
+
+// nome+like+"%25siops%25"
+// https://plataforma-scripts.betha.cloud/scripts/v1/api/tags
+
+
+
+// https://plataforma-extensoes.betha.cloud/api/extensao?filter=tipo%20%3D%20'SCRIPT'%20and%20propriedades%20in(new%20Propriedade('tipoScript',%20'JOB'))%20and%20tags%20in('SIOPS%202023')&offset=0&limit=1000
+// https://plataforma-extensoes.betha.cloud/api/extensao?filter=tipo%20%3D%20'SCRIPT'%20and%20propriedades%20in(new%20Propriedade('tipoScript'%2C%20'JOB'))%20and%20tags%20in('SIOPS%202023')&offset=0&limit=100
+// https://plataforma-extensoes.betha.cloud/api/extensao?filter=tipo%20%3D%20'SCRIPT'%20and%20propriedades%20in(new%20Propriedade('tipoScript',%20'JOB'))%20and%20tags%20in('SIOPS%202023'))&offset=0&limit=100
+
