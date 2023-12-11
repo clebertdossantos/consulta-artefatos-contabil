@@ -115,4 +115,3 @@ async function consultaArtefatos(content){
 // https://plataforma-extensoes.betha.cloud/api/extensao?filter=tipo%20%3D%20'SCRIPT'%20and%20propriedades%20in(new%20Propriedade('tipoScript',%20'JOB'))%20and%20tags%20in('SIOPS%202023')&offset=0&limit=1000
 // https://plataforma-extensoes.betha.cloud/api/extensao?filter=tipo%20%3D%20'SCRIPT'%20and%20propriedades%20in(new%20Propriedade('tipoScript'%2C%20'JOB'))%20and%20tags%20in('SIOPS%202023')&offset=0&limit=100
 // https://plataforma-extensoes.betha.cloud/api/extensao?filter=tipo%20%3D%20'SCRIPT'%20and%20propriedades%20in(new%20Propriedade('tipoScript',%20'JOB'))%20and%20tags%20in('SIOPS%202023'))&offset=0&limit=100
-
